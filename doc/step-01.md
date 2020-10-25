@@ -14,14 +14,14 @@ For this reason, the fields of a struct instance will contain functions that
 return the actual value of each port.
 
 The complete implementation of the full-adder example is available in file
-`examples/full-adder-manual.rkt`.
+`examples/full-adder-step-01.rkt`.
 We also provide a test program in file `examples/full-adder-common-test.rkt`
 that prints the complete truth table of a full-adder.
 The same test program will be used throughout this experiment.
 You can run the example by typing this command:
 
 ```
-racket examples/full-adder-manual-test.rkt
+racket examples/full-adder-step-01-test.rkt
 ```
 
 The following sections will highlight some key aspects of this implementation.
