@@ -15,8 +15,9 @@ return the actual value of each port.
 
 The complete implementation of the full-adder example is available in file
 `examples/full-adder-manual.rkt`.
-We also provide a test program in file `examples/full-adder-common-test.rkt`.
-It will be used throughout this experiment.
+We also provide a test program in file `examples/full-adder-common-test.rkt`
+that prints the complete truth table of a full-adder.
+The same test program will be used throughout this experiment.
 You can run the example by typing this command:
 
 ```
