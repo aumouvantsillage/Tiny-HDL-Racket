@@ -11,10 +11,10 @@
                     [co #:auto]) #:mutable)
 
 (define (half-adder-arch)
-  (define io (half-adder))
-  (set-half-adder-s!  io (λ () (xor ((half-adder-a io)) ((half-adder-b io)))))
-  (set-half-adder-co! io (λ () (and ((half-adder-a io)) ((half-adder-b io)))))
-  io)
+  (define self (half-adder))
+  (set-half-adder-s!  self (λ () (xor ((half-adder-a self)) ((half-adder-b self)))))
+  (set-half-adder-co! self (λ () (and ((half-adder-a self)) ((half-adder-b self)))))
+  self)
 
 (struct full-adder ([a  #:auto]
                     [b  #:auto]
@@ -23,13 +23,13 @@
                     [co #:auto]) #:mutable)
 
 (define (full-adder-arch)
-  (define io (full-adder))
-  (define h1 (half-adder-arch))
-  (define h2 (half-adder-arch))
-  (set-half-adder-a!  h1 (λ () ((full-adder-a  io))))
-  (set-half-adder-b!  h1 (λ () ((full-adder-b  io))))
+  (define self (full-adder))
+  (define h1   (half-adder-arch))
+  (define h2   (half-adder-arch))
+  (set-half-adder-a!  h1 (λ () ((full-adder-a  self))))
+  (set-half-adder-b!  h1 (λ () ((full-adder-b  self))))
   (set-half-adder-a!  h2 (λ () ((half-adder-s  h1))))
-  (set-half-adder-b!  h2 (λ () ((full-adder-ci io))))
-  (set-full-adder-s!  io (λ () ((half-adder-s  h2))))
-  (set-full-adder-co! io (λ () (or ((half-adder-co h1)) ((half-adder-co h2)))))
-  io)
+  (set-half-adder-b!  h2 (λ () ((full-adder-ci self))))
+  (set-full-adder-s!  self (λ () ((half-adder-s  h2))))
+  (set-full-adder-co! self (λ () (or ((half-adder-co h1)) ((half-adder-co h2)))))
+  self)
