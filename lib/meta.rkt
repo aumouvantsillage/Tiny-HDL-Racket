@@ -1,37 +1,23 @@
 #lang racket
 
 (require
-  syntax/parse
-  syntax/id-table
-  (prefix-in stx/ "syntax.rkt"))
+  syntax/id-table)
 
 (provide (all-defined-out))
 
-(struct metadata (stx) #:transparent)
+(struct entity (name ports))
 
-(define (make-local-scope lst [sc (make-immutable-free-id-table)])
-  (for/fold ([acc sc])
-            ([i (in-list lst)])
-    (syntax-parse i
-      [:stx/named-elt
-       (define meta (syntax-property i 'meta))
-       (unless meta
-         (raise-syntax-error #f "No metadata attached to name" #'name))
-       (dict-set acc #'name meta)]
-      [_ acc])))
+(define (make-entity name ports-lst)
+  (entity name
+          (for/fold ([acc (make-immutable-free-id-table)])
+                    ([it  (in-list ports-lst)])
+            (dict-set acc (port-name it) it))))
 
-(struct entity metadata (local-scope))
+(define (entity-port ent name)
+  (dict-ref (entity-ports ent) name))
 
-(define (make-entity stx)
-  (define/syntax-parse :stx/entity stx)
-  (entity stx (make-local-scope (attribute port))))
+(struct architecture (name ent-name))
 
-(struct architecture metadata (local-scope))
+(struct port (name mode))
 
-(define (make-architecture stx)
-  (define/syntax-parse :stx/architecture stx)
-  (architecture stx (make-local-scope (attribute body))))
-
-(struct port metadata (mode))
-
-(struct instance metadata ())
+(struct instance (name arch-name))

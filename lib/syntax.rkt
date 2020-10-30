@@ -17,8 +17,8 @@
 
 (define-syntax-class port
   #:datum-literals [input output]
-  (pattern (input name:id))
-  (pattern (output name:id)))
+  (pattern (mode:input  name:id))
+  (pattern (mode:output name:id)))
 
 (define-syntax-class architecture
   #:datum-literals [architecture]
