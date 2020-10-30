@@ -4,13 +4,6 @@
 
 (provide (all-defined-out))
 
-(define-syntax-class named-elt
-  #:attributes [name]
-  (pattern :entity)
-  (pattern :architecture)
-  (pattern :port)
-  (pattern :instance))
-
 (define-syntax-class entity
   #:datum-literals [entity]
   (pattern (entity name:id (port:port ...))))
