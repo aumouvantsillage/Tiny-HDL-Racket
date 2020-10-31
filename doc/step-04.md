@@ -18,7 +18,7 @@ half-adder-ci: unbound identifier
 
 The error message describes a consequence of the wrong entity name:
 since `half-adder` does not define a port `ci`, no accessor named `half-adder-ci`
-exists.
+exists after macro expansion.
 A better error message would be: "Port `ci` not found in entity `half-adder`".
 
 Here is a list of rules that we want to check:
@@ -33,6 +33,17 @@ Here is a list of rules that we want to check:
 * An output port of an instance cannot be assigned.
 
 The first four rules are closely related to the name resolution stage.
-In this step we have modified the function `resolve` accordingly.
+We have modified the function `resolve` accordingly.
 
 The other rules are implemented in file `lib/checker.rkt`.
+
+## Changes in the name resolution stage
+
+In `lib/scope.rkt`, the `lookup` function has been modified to accept an
+optional predicate to check against the retrieved data.
+
+File `lib/meta.rkt` defines struct types for all the named element types
+in a Tiny-HDL source.
+
+In `lib/resolver.rkt`, function `decorate` has been changed to instantiate
+these structs, and function `resolve` uses their predicates in calls to `lookup`.

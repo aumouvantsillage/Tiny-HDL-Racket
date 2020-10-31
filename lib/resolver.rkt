@@ -5,7 +5,8 @@
   "expander.rkt"
   (for-syntax
     "scope.rkt"
-    (prefix-in stx/ "syntax.rkt")))
+    (prefix-in stx/ "syntax.rkt")
+    (prefix-in meta/ "meta.rkt")))
 
 (provide begin-tiny-hdl)
 
@@ -23,21 +24,25 @@
              #,@(map decorate (attribute body))))]
 
       [:stx/entity
-       (bind! #'name
-         (with-scope
-           #`(entity name #,(map decorate (attribute port)))))]
+       (bind! #'name (meta/entity #'name))
+       (with-scope
+         #`(entity name #,(map decorate (attribute port))))]
 
       [:stx/port
-       (bind! #'name stx)]
-       
+       (bind! #'name (meta/port #'name (syntax->datum #'mode)))
+       stx]
+
       [:stx/architecture
-       (bind! #'name
-         (with-scope
-           #`(architecture name #,(add-scope #'ent-name)
-               #,@(map decorate (attribute body)))))]
+       #:with ent-name^ (add-scope #'ent-name)
+       (bind! #'name (meta/architecture #'name #'ent-name^))
+       (with-scope
+         #`(architecture name ent-name^
+             #,@(map decorate (attribute body))))]
 
       [:stx/instance
-       (bind! #'name #`(instance name #,(add-scope #'arch-name)))]
+       #:with arch-name^ (add-scope #'arch-name)
+       (bind! #'name (meta/instance #'name #'arch-name^))
+       #'(instance name arch-name^)]
 
       [:stx/assignment
        #`(assign #,(decorate #'target) #,(decorate #'expr))]
@@ -50,7 +55,7 @@
 
       [_ stx]))
 
-  (define current-entity-name (make-parameter #f))
+  (define current-entity (make-parameter #f))
 
   (define (resolve stx)
     (syntax-parse stx
@@ -61,7 +66,7 @@
            #,@(map resolve (attribute body)))]
 
       [:stx/architecture
-       (parameterize ([current-entity-name #'ent-name])
+       (parameterize ([current-entity (lookup #'ent-name meta/entity?)])
           #`(architecture name ent-name
               #,@(map resolve (attribute body))))]
 
@@ -72,11 +77,14 @@
        #`(op #,@(map resolve (attribute arg)))]
 
       [(inst-name:id port-name:id)
-       (define/syntax-parse inst:stx/instance     (lookup #'inst-name))
-       (define/syntax-parse arch:stx/architecture (lookup #'inst.arch-name))
-       #`(port-ref arch.ent-name port-name inst-name)]
+       (define inst     (lookup #'inst-name meta/instance?))
+       (define arch     (lookup (meta/instance-arch-name inst) meta/architecture?))
+       (define ent-name (meta/architecture-ent-name arch))
+       ; TODO check that the current entity has a port named #'port-name
+       #`(port-ref #,ent-name port-name inst-name)]
 
       [port-name:id
-       #`(port-ref #,(current-entity-name) port-name)]
+       ; TODO check that the current entity has a port named #'port-name
+       #`(port-ref #,(meta/entity-name (current-entity)) port-name)]
 
       [_ stx])))
