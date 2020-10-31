@@ -23,8 +23,13 @@
              #,@(map decorate (attribute body))))]
 
       [:stx/entity
-       (bind! #'name stx)]
+       (bind! #'name
+         (with-scope
+           #`(entity name #,(map decorate (attribute port)))))]
 
+      [:stx/port
+       (bind! #'name stx)]
+       
       [:stx/architecture
        (bind! #'name
          (with-scope
