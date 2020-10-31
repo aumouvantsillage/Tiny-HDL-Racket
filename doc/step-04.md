@@ -31,3 +31,8 @@ Here is a list of rules that we want to check:
 * All the input ports of an instance must be assigned in the enclosing architecture.
 * An input port of an architecture cannot be assigned.
 * An output port of an instance cannot be assigned.
+
+The first four rules are closely related to the name resolution stage.
+In this step we have modified the function `resolve` accordingly.
+
+The other rules are implemented in file `lib/checker.rkt`.
