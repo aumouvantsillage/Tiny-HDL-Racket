@@ -60,8 +60,13 @@ The purpose of the `begin-tiny-hdl` macro is to create the root scope.
 In the full-adder example, we get the following hierarchy:
 
 * Root scope (`begin-tiny-hdl`)
+    * Scope for entity `half-adder`.
+    * Scope for entity `full-adder`.
     * Scope for architecture `half-adder-arch`.
     * Scope for architecture `full-adder-arch`.
+
+N.B: Creating scopes for entities is not strictly necessary.
+It will mostly be useful to enforce distinct port names in a given entity.
 
 ### Registering named associations
 
@@ -70,8 +75,10 @@ In our case, we will use this function to associate names to their
 corresponding syntax objects: entities, architectures, instances.
 
 * Root scope: `half-adder`, `full-adder`, `half-adder-arch`, `full-adder-arch`.
+    * Scope for entity `half-adder`: `a`, `b`, `s`, `co`.
+    * Scope for entity `full-adder`: `a`, `b`, `ci`, `s`, `co`.
     * Scope for architecture `half-adder-arch`: empty.
-    * Scope for architecture `full-adder-arch`: `h1`, `h2`
+    * Scope for architecture `full-adder-arch`: `h1`, `h2`.
 
 ### Decorate named references with their current scope
 

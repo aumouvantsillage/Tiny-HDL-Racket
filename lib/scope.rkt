@@ -26,7 +26,10 @@
 ; Associate the given data to the given name in a scope.
 ; Return the data unchanged.
 (define (bind! name data [sc (current-scope)])
-  (dict-set! (scope-table sc) name data)
+  (define table (scope-table sc))
+  (when (dict-has-key? table name)
+    (raise-syntax-error #f "Multiple bindings for identifier" name))
+  (dict-set! table name data)
   data)
 
 ; Add scope information to a syntax object.
