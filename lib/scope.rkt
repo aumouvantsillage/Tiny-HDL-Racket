@@ -3,7 +3,9 @@
 (require syntax/id-table)
 
 (provide
+  (struct-out scope)
   with-scope
+  with-scope*
   bind!
   add-scope
   lookup)
@@ -22,6 +24,12 @@
 (define-syntax-rule (with-scope body ...)
   (parameterize ([current-scope (make-scope)])
     body ...))
+
+(define-syntax-rule (with-scope* body ...)
+  (let ([sc (make-scope)])
+    (values (parameterize ([current-scope sc])
+              body ...)
+            sc)))
 
 ; Associate the given data to the given name in a scope.
 ; Return the data unchanged.
