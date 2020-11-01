@@ -33,9 +33,21 @@ Here is a list of rules that we want to check:
 * An output port of an instance cannot be assigned.
 
 The first four rules are closely related to the name resolution stage.
-We have modified the function `resolve` accordingly.
-
+We have added these checks to `lib/resolver.rkt`.
 The other rules are implemented in file `lib/checker.rkt`.
+
+We provide a series of examples that each violate a specific rule.
+Use this command to run one of these examples:
+
+```
+racket examples/error-...-step-04.rkt
+```
+
+You can verify that the full-adder example from step 3 passes all these checks:
+
+```
+racket examples/full-adder-step-03-test.rkt
+```
 
 ## Changes in the name resolution stage
 
