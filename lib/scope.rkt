@@ -8,6 +8,7 @@
   with-scope*
   bind!
   add-scope
+  with-lookup-cache
   lookup)
 
 ; A scope has an optional parent scope
@@ -44,14 +45,23 @@
 (define (add-scope stx [sc (current-scope)])
   (syntax-property stx 'scope sc))
 
+(define lookup-cache (make-parameter (make-hasheq)))
+
+(define-syntax-rule (with-lookup-cache body ...)
+  (parameterize ([lookup-cache (make-hasheq)])
+    body ...))
+
 ; Lookup a name in a scope chain. If no scope is specified,
 ; start at the scope attached to the name.
 ; Returns the corresponding data, or raise an error if not found.
 (define (lookup name [pred (λ (x) #t)] [sc (syntax-property name 'scope)])
-  (unless sc
-    (raise-syntax-error #f "No declaration found for identifier" name))
-  (define res (dict-ref (scope-table sc) name
-                (λ () (lookup name pred (scope-parent sc)))))
-  (unless (pred res)
-    (raise-syntax-error #f "Invalid target" name))
-  res)
+  (dict-ref (lookup-cache) name
+      (λ ()
+        (unless sc
+          (raise-syntax-error #f "No declaration found for identifier" name))
+        (define res (dict-ref (scope-table sc) name
+                      (λ () (lookup name pred (scope-parent sc)))))
+        (unless (pred res)
+          (raise-syntax-error #f "Invalid target" name))
+        (dict-set! (lookup-cache) name res)
+        res)))

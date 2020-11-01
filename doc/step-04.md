@@ -43,7 +43,7 @@ Use this command to run one of these examples:
 racket examples/error-...-step-04.rkt
 ```
 
-You can verify that the full-adder example from step 3 passes all these checks:
+You can also verify that the full-adder example from step 3 passes all the checks:
 
 ```
 racket examples/full-adder-step-03-test.rkt
@@ -51,11 +51,23 @@ racket examples/full-adder-step-03-test.rkt
 
 ## Changes in the name resolution stage
 
-In `lib/scope.rkt`, the `lookup` function has been modified to accept an
-optional predicate to check against the retrieved data.
+In `lib/scope.rkt`:
 
-File `lib/meta.rkt` defines struct types for all the named element types
+* The `lookup` function has been modified to accept an optional predicate
+  to check against the retrieved data.
+* The new macro `with-scope*` is a variant of `with-scope` that also returns
+  the new scope object. Having a reference to the scope's table will be useful
+  when we want to inspect the ports of a given entity or the instances in a
+  given architecture.
+* A parameter `lookup-cache` stores the result of each lookup operation in
+  a hash map. A new map is created with the macro `with-lookup-cache`.
+
+File `lib/meta.rkt` defines `struct` types for all the named element types
 in a Tiny-HDL source.
 
 In `lib/resolver.rkt`, function `decorate` has been changed to instantiate
-these structs, and function `resolve` uses their predicates in calls to `lookup`.
+these `struct`s, and function `resolve` uses their predicates when calling `lookup`.
+Some checks may seem redundant, but they prove useful when an instance or
+assignment appears before the elements that it references (see the examples `error-...-reversed-step-04.rkt`).
+Redundant lookup operations have a low impact on performance thanks to the
+use of a lookup cache in function `resolve`.
