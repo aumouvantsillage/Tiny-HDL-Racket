@@ -1,7 +1,7 @@
 #lang racket
 
 (require
-  ; "expander.rkt"
+  "expander.rkt"
   (prefix-in stx/ "syntax.rkt")
   (for-syntax
     syntax/parse
