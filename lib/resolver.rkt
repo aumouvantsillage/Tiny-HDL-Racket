@@ -1,23 +1,24 @@
 #lang racket
 
 (require
-  syntax/parse/define
   "expander.rkt"
+  (prefix-in stx/ "syntax.rkt")
   (for-syntax
     racket
+    syntax/parse
     "scope.rkt"
     (prefix-in stx/ "syntax.rkt")
     (prefix-in meta/ "meta.rkt")))
 
-(provide begin-tiny-hdl)
-
-(define-syntax (begin-tiny-hdl stx)
-  (resolve (decorate stx)))
+(provide
+  (for-syntax
+    decorate
+    resolve))
 
 (begin-for-syntax
   (define (decorate stx)
     (syntax-parse stx
-      #:literals [begin-tiny-hdl]
+      #:datum-literals [begin-tiny-hdl]
 
       [(begin-tiny-hdl body ...)
        (with-scope
@@ -64,7 +65,7 @@
   (define (resolve stx)
     (with-lookup-cache
       (syntax-parse stx
-        #:literals [begin-tiny-hdl]
+        #:datum-literals [begin-tiny-hdl]
 
         [(begin-tiny-hdl body ...)
          #`(begin

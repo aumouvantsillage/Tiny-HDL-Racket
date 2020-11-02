@@ -6,4 +6,7 @@
 
 (provide
   (all-from-out "lib/expander.rkt")
-  (all-from-out "lib/resolver.rkt"))
+  begin-tiny-hdl)
+
+(define-syntax (begin-tiny-hdl stx)
+  (resolve (decorate stx)))
