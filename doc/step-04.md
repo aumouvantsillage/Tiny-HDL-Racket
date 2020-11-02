@@ -27,8 +27,8 @@ Here is a list of rules that we want to check:
 * In an instantiation statement, the architecture name must refer to an existing architecture in the current scope.
 * In a port reference, the (optional) instance name must refer to an existing instance in the current scope.
 * In a port reference, the port name must refer to an existing port.
-* All the output ports of an architecture must be the assigned one, and only one time, in this architecture.
-* All the input ports of an instance must be assigned one, and only one time, in the enclosing architecture.
+* All the output ports of an architecture must be the assigned one, and only one time in this architecture.
+* All the input ports of an instance must be assigned one, and only one time in the enclosing architecture.
 * An input port of an architecture cannot be assigned.
 * An output port of an instance cannot be assigned.
 
