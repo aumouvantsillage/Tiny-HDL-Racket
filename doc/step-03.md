@@ -55,7 +55,7 @@ Scopes are created using the `with-scope` macro.
 Internally, this construct makes use of a Racket parameter to keep the current
 scope implicit and manage the nesting between scopes.
 
-The purpose of the `begin-tiny-hdl` macro is to create the root scope.
+The purpose of the `begin-tiny-hdl` macro (defined in `main.rkt`) is to create the root scope.
 
 In the full-adder example, we get the following hierarchy:
 
