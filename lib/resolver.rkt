@@ -7,7 +7,6 @@
     racket
     syntax/parse
     "scope.rkt"
-    (prefix-in stx/ "syntax.rkt")
     (prefix-in meta/ "meta.rkt")))
 
 (provide begin-tiny-hdl)

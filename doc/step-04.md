@@ -32,9 +32,9 @@ Here is a list of rules that we want to check:
 * An input port of an architecture cannot be assigned.
 * An output port of an instance cannot be assigned.
 
-The first four rules are closely related to the name resolution stage.
-We have added these checks to `lib/resolver.rkt`.
-The other rules are implemented in file `lib/checker.rkt`.
+The first four rules are natural additions to the current name resolution process.
+The others are specific to the domain of digital circuit modeling, where all inputs
+of a circuit must have a known value in order to compute an output deterministically.
 
 We provide a series of examples that each violate a specific rule.
 Use this command to run one of these examples:
@@ -49,7 +49,7 @@ You can also verify that the full-adder example from step 3 passes all the check
 racket examples/full-adder-step-03-test.rkt
 ```
 
-## Changes in the name resolution stage
+## Changes in the name resolution process
 
 In `lib/scope.rkt`:
 
@@ -66,8 +66,16 @@ File `lib/meta.rkt` defines `struct` types for all the named element types
 in a Tiny-HDL source.
 
 In `lib/resolver.rkt`, function `decorate` has been changed to instantiate
-these `struct`s, and function `resolve` uses their predicates when calling `lookup`.
+these `struct`s.
+Names are systematically decorated using `add-scope` because any name may be
+used later in a `lookup`.
+
+Function `resolve` uses predicates when calling `lookup`.
 Some checks may seem redundant, but they prove useful when an instance or
 assignment appears before the elements that it references (see the examples `error-...-reversed-step-04.rkt`).
 Redundant lookup operations have a low impact on performance thanks to the
 use of a lookup cache in macro `begin-tiny-hdl`.
+
+All semantic rule checks have been inserted in the `resolve` function.
+As a consequence, the result of `resolve` is a semantically correct syntax
+object where names have been fully resolved.
