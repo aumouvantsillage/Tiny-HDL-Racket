@@ -7,15 +7,15 @@
     syntax/parse
     "scope.rkt"))
 
-(provide
-  (for-syntax
-    decorate
-    resolve))
+(provide begin-tiny-hdl)
+
+(define-syntax (begin-tiny-hdl stx)
+  (resolve (decorate stx)))
 
 (begin-for-syntax
   (define (decorate stx)
     (syntax-parse stx
-      #:datum-literals [begin-tiny-hdl]
+      #:literals [begin-tiny-hdl]
 
       [(begin-tiny-hdl body ...)
        (with-scope
@@ -54,7 +54,7 @@
 
   (define (resolve stx)
     (syntax-parse stx
-      #:datum-literals [begin-tiny-hdl]
+      #:literals [begin-tiny-hdl]
 
       [(begin-tiny-hdl body ...)
        #`(begin
