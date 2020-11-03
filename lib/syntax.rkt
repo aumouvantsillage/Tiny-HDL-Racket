@@ -40,10 +40,8 @@
     (pattern :boolean))
 
   (define-syntax-class port-ref
-    #:literals [port-ref]
     (pattern port-name:id)
-    (pattern (inst-name:id port-name:id))
-    (pattern (port-ref ent-name:id port-name:id (~optional inst-name:id))))
+    (pattern (inst-name:id port-name:id)))
 
   (define-syntax-class operation
     #:literals [not and or xor]

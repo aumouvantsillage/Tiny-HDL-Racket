@@ -10,15 +10,15 @@
     (prefix-in stx/ "syntax.rkt")
     (prefix-in meta/ "meta.rkt")))
 
-(provide
-  (for-syntax
-    decorate
-    resolve))
+(provide begin-tiny-hdl)
+
+(define-syntax (begin-tiny-hdl stx)
+  (resolve (decorate stx)))
 
 (begin-for-syntax
   (define (decorate stx)
     (syntax-parse stx
-      #:datum-literals [begin-tiny-hdl]
+      #:literals [begin-tiny-hdl]
 
       [(begin-tiny-hdl body ...)
        (with-scope
@@ -64,27 +64,33 @@
 
       [_ stx]))
 
-  (define current-entity (make-parameter #f))
+  (define current-entity     (make-parameter #f))
+  (define assignment-targets (make-parameter #f))
 
   (define (resolve stx)
     (syntax-parse stx
-      #:datum-literals [begin-tiny-hdl]
+      #:literals [begin-tiny-hdl]
 
       [(begin-tiny-hdl body ...)
-       #`(begin-tiny-hdl
+       #`(begin
            #,@(map resolve (attribute body)))]
 
       [:stx/architecture
-       (parameterize ([current-entity (lookup #'ent-name meta/entity?)])
+       (parameterize ([current-entity (lookup #'ent-name meta/entity?)]
+                      [assignment-targets (collect-assignment-targets (attribute body))])
+          (check-all-assigned stx (assignment-targets) #'ent-name 'output)
           #`(architecture name ent-name
               #,@(map resolve (attribute body))))]
 
       [:stx/instance
-       (lookup #'arch-name meta/architecture?)
+       #:with ent-name (meta/architecture-ent-name (lookup #'arch-name meta/architecture?))
+       (check-all-assigned stx (assignment-targets) #'ent-name 'input #'name)
        stx]
 
       [:stx/assignment
-       #`(assign #,(resolve #'target) #,(resolve #'expr))]
+       (define target^ (resolve #'target))
+       (check-target-mode target^)
+       #`(assign #,target^ #,(resolve #'expr))]
 
       [:stx/operation
        #`(op #,@(map resolve (attribute arg)))]
@@ -105,4 +111,40 @@
          (raise-syntax-error #f (format "Port not found in entity ~a" (syntax->datum ent-name)) #'port-name))
        #`(port-ref #,ent-name port-name)]
 
-      [_ stx])))
+      [_ stx]))
+
+  ; Check that the target port of an assignment has the appropriate port:
+  ; * output in an assignment to a port of the current architecture,
+  ; * input  in an assignment to a port of an instance.
+  (define (check-target-mode stx)
+    (define/syntax-parse (_ ent-name port-name (~optional inst-name)) stx)
+    (define port (dict-ref (meta/entity-ports (lookup #'ent-name)) #'port-name))
+    (define expected-mode (if (attribute inst-name) 'input 'output))
+    (unless (eq? expected-mode (meta/port-mode port))
+      (raise-syntax-error (syntax->datum #'port-name) "Invalid target for assignment" stx)))
+
+  ; Collect the assignment targets in a given architecture, as a set.
+  ; This function also checks that the same port is not assigned twice.
+  (define (collect-assignment-targets stmt-lst)
+    (for/fold ([acc  (set)])
+              ([stmt (in-list stmt-lst)])
+      (syntax-parse stmt
+        [:stx/assignment
+         (define port-id (syntax->datum #'target))
+         (when (set-member? acc port-id)
+           (define port-name (if (list? port-id) (second port-id) port-id))
+           (raise-syntax-error port-name "Port is assigned more than one time" #'target))
+         (set-add acc port-id)]
+
+        [_ acc])))
+
+  ; Check that all output ports of the current architecture, or all input ports
+  ; of a given instance, are assigned.
+  (define (check-all-assigned ctx targets ent-name mode [inst-name #f])
+    (for ([(port-name port) (in-dict (meta/entity-ports (lookup ent-name meta/entity?)))]
+          #:when (eq? mode (meta/port-mode port)))
+      (define port-name^ (syntax->datum port-name))
+      (define inst-name^ (and inst-name (syntax->datum inst-name)))
+      (define port-id (if inst-name (list inst-name^ port-name^) port-name^))
+      (unless (set-member? targets port-id)
+        (raise-syntax-error port-name^ "Port is never assigned" ctx)))))

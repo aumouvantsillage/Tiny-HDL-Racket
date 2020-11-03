@@ -9,4 +9,5 @@
   (architecture b e
     (instance i a)
     (assign (i x) x)
-    (assign x (i y)))) ; <-- x: Invalid target for assignment
+    (assign x (i y)) ; <-- x: Invalid target for assignment
+    (assign y (i y))))

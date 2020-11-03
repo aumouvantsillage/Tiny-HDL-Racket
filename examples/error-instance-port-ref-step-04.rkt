@@ -9,4 +9,5 @@
   (architecture b e
     (instance i a)
     (assign (i z) x) ; <-- z: Port not found in entity e
+    (assign (i x) x)
     (assign y (i y))))
