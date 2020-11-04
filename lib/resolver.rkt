@@ -26,36 +26,32 @@
              #,@(map decorate (attribute body))))]
 
       [:stx/entity
-       #:with name^ (add-scope #'name)
        (define-values (port^ sc)
          (with-scope*
            (map decorate (attribute port))))
-       (bind! #'name (meta/entity #'name^ (scope-table sc)))
+       (bind! #'name (meta/entity (scope-table sc)))
        (quasisyntax/loc stx
-         (entity name^ #,port^))]
+         (entity name #,port^))]
 
       [:stx/port
-       #:with name^ (add-scope #'name)
-       (bind! #'name (meta/port #'name^ (syntax->datum #'mode)))
+       (bind! #'name (meta/port (syntax->datum #'mode)))
        (syntax/loc stx
-         (mode name^))]
+         (mode name))]
 
       [:stx/architecture
-       #:with name^     (add-scope #'name)
        #:with ent-name^ (add-scope #'ent-name)
        (define-values (body^ sc)
          (with-scope*
            (map decorate (attribute body))))
-       (bind! #'name (meta/architecture #'name^ #'ent-name^ (scope-table sc)))
+       (bind! #'name (meta/architecture #'ent-name^ (scope-table sc)))
        (quasisyntax/loc stx
-         (architecture name^ ent-name^ #,@body^))]
+         (architecture name ent-name^ #,@body^))]
 
       [:stx/instance
-       #:with name^      (add-scope #'name)
        #:with arch-name^ (add-scope #'arch-name)
-       (bind! #'name (meta/instance #'name^ #'arch-name^))
+       (bind! #'name (meta/instance #'arch-name^))
        (syntax/loc stx
-         (instance name^ arch-name^))]
+         (instance name arch-name^))]
 
       [:stx/assignment
        (quasisyntax/loc stx
@@ -72,8 +68,8 @@
 
       [_ stx]))
 
-  (define current-entity     (make-parameter #f))
-  (define assignment-targets (make-parameter #f))
+  (define current-entity-name (make-parameter #f))
+  (define assignment-targets  (make-parameter #f))
 
   (define (resolve stx)
     (syntax-parse stx
@@ -84,8 +80,9 @@
            #,@(map resolve (attribute body)))]
 
       [:stx/architecture
-       (parameterize ([current-entity (lookup #'ent-name meta/entity?)]
+       (parameterize ([current-entity-name #'ent-name]
                       [assignment-targets (collect-assignment-targets (attribute body))])
+          (lookup #'ent-name meta/entity?)
           (check-all-assigned stx (assignment-targets) #'ent-name 'output)
           #`(architecture name ent-name
               #,@(map resolve (attribute body))))]
@@ -120,8 +117,8 @@
        #`(port-ref #,ent-name port-name inst-name)]
 
       [port-name:id
-       (define* ent      (current-entity)
-                ent-name (meta/entity-name ent))
+       (define* ent-name (current-entity-name)
+                ent      (lookup ent-name))
        (unless (dict-has-key? (meta/entity-ports ent) #'port-name)
          (raise-syntax-error #f (format "Port not found in entity ~a" (syntax->datum ent-name)) #'port-name))
        #`(port-ref #,ent-name port-name)]

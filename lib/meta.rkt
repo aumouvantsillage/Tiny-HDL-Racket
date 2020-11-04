@@ -2,10 +2,10 @@
 
 (provide (all-defined-out))
 
-(struct entity (name ports))
+(struct entity (ports))
 
-(struct port (name mode))
+(struct port (mode))
 
-(struct architecture (name ent-name instances))
+(struct architecture (ent-name instances))
 
-(struct instance (name arch-name))
+(struct instance (arch-name))
