@@ -31,12 +31,14 @@
          (with-scope*
            (map decorate (attribute port))))
        (bind! #'name (meta/entity #'name^ (scope-table sc)))
-       #`(entity name^ #,port^)]
+       (quasisyntax/loc stx
+         (entity name^ #,port^))]
 
       [:stx/port
        #:with name^ (add-scope #'name)
        (bind! #'name (meta/port #'name^ (syntax->datum #'mode)))
-       #`(mode name^)]
+       (syntax/loc stx
+         (mode name^))]
 
       [:stx/architecture
        #:with name^     (add-scope #'name)
@@ -45,22 +47,28 @@
          (with-scope*
            (map decorate (attribute body))))
        (bind! #'name (meta/architecture #'name^ #'ent-name^ (scope-table sc)))
-       #`(architecture name^ ent-name^ #,@body^)]
+       (quasisyntax/loc stx
+         (architecture name^ ent-name^ #,@body^))]
 
       [:stx/instance
        #:with name^      (add-scope #'name)
        #:with arch-name^ (add-scope #'arch-name)
        (bind! #'name (meta/instance #'name^ #'arch-name^))
-       #'(instance name^ arch-name^)]
+       (syntax/loc stx
+         (instance name^ arch-name^))]
 
       [:stx/assignment
-       #`(assign #,(decorate #'target) #,(decorate #'expr))]
+       (quasisyntax/loc stx
+         (assign #,(decorate #'target) #,(decorate #'expr)))]
 
       [:stx/operation
-       #`(op #,@(map decorate (attribute arg)))]
+       (quasisyntax/loc stx
+         (op #,@(map decorate (attribute arg))))]
 
       [(inst-name:id port-name:id)
-       #`(#,(add-scope #'inst-name) port-name)]
+       #:with inst-name^ (add-scope #'inst-name)
+       (quasisyntax/loc stx
+         (inst-name^ port-name))]
 
       [_ stx]))
 
