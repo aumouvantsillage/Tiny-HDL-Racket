@@ -13,7 +13,8 @@
 (provide begin-tiny-hdl)
 
 (define-syntax (begin-tiny-hdl stx)
-  (resolve (decorate stx)))
+  (with-lookup-cache
+    (resolve (decorate stx))))
 
 (begin-for-syntax
   (define (decorate stx)
@@ -82,13 +83,20 @@
       [:stx/architecture
        (parameterize ([current-entity-name #'ent-name]
                       [assignment-targets (collect-assignment-targets (attribute body))])
+          ; Check that ent-name refers to an entity.
           (lookup #'ent-name meta/entity?)
+          ; Check that all output ports of that entity are assigned in the
+          ; current architecture.
           (check-all-assigned stx (assignment-targets) #'ent-name 'output)
           #`(architecture name ent-name
               #,@(map resolve (attribute body))))]
 
       [:stx/instance
+       ; Check that arch-name refers to an architecture.
+       ; Get the entity name for that architecture.
        #:with ent-name (meta/architecture-ent-name (lookup #'arch-name meta/architecture?))
+       ; Check that all input ports of that entity are assigned
+       ; for this instance in the current architecture.
        (check-all-assigned stx (assignment-targets) #'ent-name 'input #'name)
        stx]
 
@@ -108,10 +116,14 @@
        #`(op #,@(map resolve (attribute arg)))]
 
       [(inst-name:id port-name:id)
+       ; Check that inst-name refers to an instance.
+       ; Check that the architecture name for that instance refers to an architecture.
+       ; Check that the entity name for that architecture refers to an entity.
        (define* inst     (lookup #'inst-name meta/instance?)
                 arch     (lookup (meta/instance-arch-name inst) meta/architecture?)
                 ent-name (meta/architecture-ent-name arch)
                 ent      (lookup ent-name meta/entity?))
+       ; Check that port-name refers to a port in that entity.
        (unless (dict-has-key? (meta/entity-ports ent) #'port-name)
          (raise-syntax-error #f (format "Port not found in entity ~a" (syntax->datum ent-name)) #'port-name))
        #`(port-ref #,ent-name port-name inst-name)]
@@ -119,6 +131,7 @@
       [port-name:id
        (define* ent-name (current-entity-name)
                 ent      (lookup ent-name))
+       ; Check that port-name refers to a port in the entity of the current architecture.
        (unless (dict-has-key? (meta/entity-ports ent) #'port-name)
          (raise-syntax-error #f (format "Port not found in entity ~a" (syntax->datum ent-name)) #'port-name))
        #`(port-ref #,ent-name port-name)]
@@ -140,8 +153,8 @@
 
         [_ acc])))
 
-  ; Check that all output ports of the current architecture, or all input ports
-  ; of a given instance, are assigned.
+  ; Check that all output ports of the current architecture,
+  ; or all input ports of a given instance, are assigned.
   (define (check-all-assigned ctx targets ent-name mode [inst-name #f])
     (for ([(port-name port) (in-dict (meta/entity-ports (lookup ent-name meta/entity?)))]
           #:when (eq? mode (meta/port-mode port)))

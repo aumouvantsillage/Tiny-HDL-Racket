@@ -62,6 +62,6 @@
         (define res (dict-ref (scope-table sc) name
                       (λ () (lookup name pred (scope-parent sc)))))
         (unless (pred res)
-          (raise-syntax-error #f "Invalid target" name))
+          (raise-syntax-error #f "Cannot be used in this context" name))
         (dict-set! (lookup-cache) name res)
         res)))
