@@ -6,6 +6,7 @@
   (for-syntax
     racket
     syntax/parse
+    "helpers.rkt"
     "scope.rkt"
     (prefix-in meta/ "meta.rkt")))
 
@@ -87,40 +88,37 @@
        stx]
 
       [:stx/assignment
-       (define target^ (resolve #'target))
-       (check-target-mode target^)
-       #`(assign #,target^ #,(resolve #'expr))]
+       #:with target^ (resolve #'target)
+       #:with (_ ent-name port-name (~optional inst-name)) #'target^
+       ; Check that the target port of an assignment has the appropriate port:
+       ; * output in an assignment to a port of the current architecture,
+       ; * input  in an assignment to a port of an instance.
+       (define* mode (if (attribute inst-name) 'input 'output)
+                port (dict-ref (meta/entity-ports (lookup #'ent-name)) #'port-name))
+       (unless (eq? mode (meta/port-mode port))
+         (raise-syntax-error (syntax->datum #'port-name) "Invalid target for assignment" stx))
+       #`(assign target^ #,(resolve #'expr))]
 
       [:stx/operation
        #`(op #,@(map resolve (attribute arg)))]
 
       [(inst-name:id port-name:id)
-       (define inst     (lookup #'inst-name meta/instance?))
-       (define arch     (lookup (meta/instance-arch-name inst) meta/architecture?))
-       (define ent-name (meta/architecture-ent-name arch))
-       (define ent      (lookup ent-name meta/entity?))
+       (define* inst     (lookup #'inst-name meta/instance?)
+                arch     (lookup (meta/instance-arch-name inst) meta/architecture?)
+                ent-name (meta/architecture-ent-name arch)
+                ent      (lookup ent-name meta/entity?))
        (unless (dict-has-key? (meta/entity-ports ent) #'port-name)
          (raise-syntax-error #f (format "Port not found in entity ~a" (syntax->datum ent-name)) #'port-name))
        #`(port-ref #,ent-name port-name inst-name)]
 
       [port-name:id
-       (define ent (current-entity))
-       (define ent-name (meta/entity-name ent))
+       (define* ent      (current-entity)
+                ent-name (meta/entity-name ent))
        (unless (dict-has-key? (meta/entity-ports ent) #'port-name)
          (raise-syntax-error #f (format "Port not found in entity ~a" (syntax->datum ent-name)) #'port-name))
        #`(port-ref #,ent-name port-name)]
 
       [_ stx]))
-
-  ; Check that the target port of an assignment has the appropriate port:
-  ; * output in an assignment to a port of the current architecture,
-  ; * input  in an assignment to a port of an instance.
-  (define (check-target-mode stx)
-    (define/syntax-parse (_ ent-name port-name (~optional inst-name)) stx)
-    (define port (dict-ref (meta/entity-ports (lookup #'ent-name)) #'port-name))
-    (define expected-mode (if (attribute inst-name) 'input 'output))
-    (unless (eq? expected-mode (meta/port-mode port))
-      (raise-syntax-error (syntax->datum #'port-name) "Invalid target for assignment" stx)))
 
   ; Collect the assignment targets in a given architecture, as a set.
   ; This function also checks that the same port is not assigned twice.
@@ -142,8 +140,8 @@
   (define (check-all-assigned ctx targets ent-name mode [inst-name #f])
     (for ([(port-name port) (in-dict (meta/entity-ports (lookup ent-name meta/entity?)))]
           #:when (eq? mode (meta/port-mode port)))
-      (define port-name^ (syntax->datum port-name))
-      (define inst-name^ (and inst-name (syntax->datum inst-name)))
-      (define port-id (if inst-name (list inst-name^ port-name^) port-name^))
+      (define* port-name^ (syntax->datum port-name)
+               inst-name^ (and inst-name (syntax->datum inst-name))
+               port-id (if inst-name (list inst-name^ port-name^) port-name^))
       (unless (set-member? targets port-id)
         (raise-syntax-error port-name^ "Port is never assigned" ctx)))))
