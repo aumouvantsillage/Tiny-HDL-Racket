@@ -7,11 +7,15 @@
     racket/syntax))
 
 (provide
+  use
   entity
   architecture
   instance
   assign
   port-ref)
+
+(define-simple-macro (use path)
+  (require path))
 
 (define-simple-macro (entity ent-name ([_ port-name] ...))
   (begin

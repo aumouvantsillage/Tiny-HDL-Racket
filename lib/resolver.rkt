@@ -13,18 +13,44 @@
 (provide begin-tiny-hdl)
 
 (define-syntax (begin-tiny-hdl stx)
-  (with-lookup-cache
-    (resolve (decorate stx))))
+  (define-values (stx^ sc)
+    (with-scope* (decorate stx)))
+  #`(begin
+      (require
+        (prefix-in meta/ tiny-hdl/lib/meta)
+        tiny-hdl/lib/scope
+        syntax/id-table)
+      (provide #%tiny-hdl-use)
+      (define (#%tiny-hdl-use)
+        #,@(make-use-body sc))
+      #,(with-lookup-cache (resolve stx^))))
 
 (begin-for-syntax
+  (define (make-use-body sc)
+    (for/list ([(name obj) (in-dict (scope-table sc))])
+      (match obj
+        [(meta/entity ports)
+         #`(let ([ent (meta/entity (make-free-id-table))])
+             (bind! #'#,name ent)
+             #,@(for/list ([(k v) (in-dict ports)])
+                  #`(dict-set! (meta/entity-ports ent) #'#,k (meta/port '#,(meta/port-mode v)))))]
+
+        [(meta/architecture ent-name _)
+         #`(bind! #'#,name (meta/architecture (add-scope #'#,ent-name) (make-immutable-free-id-table)))])))
+
   (define (decorate stx)
     (syntax-parse stx
       #:literals [begin-tiny-hdl]
 
       [(begin-tiny-hdl body ...)
-       (with-scope
-         #`(begin-tiny-hdl
-             #,@(map decorate (attribute body))))]
+       #`(begin-tiny-hdl
+           #,@(map decorate (attribute body)))]
+
+      [:stx/use
+       (define* path-str (syntax->datum #'path)
+                do-use   (dynamic-require path-str '#%tiny-hdl-use))
+       (do-use)
+       stx]
 
       [:stx/entity
        (define-values (port^ sc)

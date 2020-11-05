@@ -9,6 +9,10 @@
   (for-syntax (all-defined-out)))
 
 (begin-for-syntax
+  (define-syntax-class use
+    #:literals [use]
+    (pattern (use path:str)))
+
   (define-syntax-class entity
     #:literals [entity]
     (pattern (entity name:id (port:port ...))))
