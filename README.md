@@ -1,4 +1,4 @@
-# Racket-Tiny-HDL
+# Tiny-HDL
 
 Tiny-HDL is a minimal Hardware Description Language that borrows concepts from
 VHDL and Verilog.
