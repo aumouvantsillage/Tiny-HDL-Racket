@@ -15,3 +15,7 @@ You can run this example by typing this command:
 ```
 racket examples/full-adder-step-06-test.rkt
 ```
+
+## Adding a reader
+
+I have added a `lang` folder containing a file `reader.rkt`.
