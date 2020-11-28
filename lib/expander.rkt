@@ -13,7 +13,7 @@
   assign
   port-ref)
 
-(define-simple-macro (entity ent-name ([_ port-name] ...))
+(define-syntax-rule (entity ent-name ([_ port-name] ...))
   (begin
     (provide (struct-out ent-name))
     (struct ent-name ([port-name #:auto] ...) #:mutable)))
@@ -23,7 +23,7 @@
   (λ (stx)
     (raise-syntax-error (syntax-e stx) "can only be used inside an architecture")))
 
-(define-simple-macro (architecture arch-name ent-name body ...)
+(define-syntax-rule (architecture arch-name ent-name body ...)
   (begin
     (provide arch-name)
     (define (arch-name)
@@ -32,7 +32,7 @@
         body ...)
       self)))
 
-(define-simple-macro (instance inst-name arch-name)
+(define-syntax-rule (instance inst-name arch-name)
   (define inst-name (arch-name)))
 
 (define-syntax-parser assign
