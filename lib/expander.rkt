@@ -14,10 +14,10 @@
   assign
   port-ref)
 
-(define-syntax-rule (use path)
+(define-simple-macro (use path)
   (require path))
 
-(define-syntax-rule (entity ent-name ([_ port-name] ...))
+(define-simple-macro (entity ent-name ([_ port-name] ...))
   (begin
     (provide (struct-out ent-name))
     (struct ent-name ([port-name #:auto] ...) #:mutable)))
@@ -27,7 +27,7 @@
   (λ (stx)
     (raise-syntax-error (syntax-e stx) "can only be used inside an architecture")))
 
-(define-syntax-rule (architecture arch-name ent-name body ...)
+(define-simple-macro (architecture arch-name ent-name body ...)
   (begin
     (provide arch-name)
     (define (arch-name)
@@ -36,18 +36,15 @@
         body ...)
       self)))
 
-(define-syntax-rule (instance inst-name arch-name)
+(define-simple-macro (instance inst-name arch-name)
   (define inst-name (arch-name)))
 
-(define-syntax-parser assign
-  #:literals [port-ref]
-  [(_ (port-ref ent-name port-name (~optional inst-name)) expr)
+(define-simple-macro (assign ((~literal port-ref) ent-name port-name (~optional inst-name)) expr)
    #:with setter-name (format-id #'port-name "set-~a-~a!" #'ent-name #'port-name)
    #:with arg-name (if (attribute inst-name) #'inst-name #'current-instance)
-   #'(setter-name arg-name (λ () expr))])
+   (setter-name arg-name (λ () expr)))
 
-(define-syntax-parser port-ref
-  [(_ ent-name port-name (~optional inst-name))
+(define-simple-macro (port-ref ent-name port-name (~optional inst-name))
    #:with getter-name (format-id #'port-name "~a-~a" #'ent-name #'port-name)
    #:with arg-name (if (attribute inst-name) #'inst-name #'current-instance)
-   #'((getter-name arg-name))])
+   ((getter-name arg-name)))
