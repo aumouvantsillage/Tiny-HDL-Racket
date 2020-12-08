@@ -14,7 +14,7 @@
 
 (define-syntax (begin-tiny-hdl stx)
   (with-lookup-cache
-    (resolve (decorate stx))))
+    (check (decorate stx))))
 
 (begin-for-syntax
   (define (decorate stx)
@@ -72,13 +72,13 @@
   (define current-entity-name (make-parameter #f))
   (define assignment-targets  (make-parameter #f))
 
-  (define (resolve stx)
+  (define (check stx)
     (syntax-parse stx
       #:literals [begin-tiny-hdl]
 
       [(begin-tiny-hdl body ...)
        #`(begin
-           #,@(map resolve (attribute body)))]
+           #,@(map check (attribute body)))]
 
       [:stx/architecture
        (parameterize ([current-entity-name #'ent-name]
@@ -89,7 +89,7 @@
           ; current architecture.
           (check-all-assigned stx (assignment-targets) #'ent-name 'output)
           #`(architecture name ent-name
-              #,@(map resolve (attribute body))))]
+              #,@(map check (attribute body))))]
 
       [:stx/instance
        ; Check that arch-name refers to an architecture.
@@ -101,7 +101,7 @@
        stx]
 
       [:stx/assignment
-       #:with target^ (resolve #'target)
+       #:with target^ (check #'target)
        #:with (_ ent-name port-name (~optional inst-name)) #'target^
        ; Check that the target port of an assignment has the appropriate port:
        ; * output in an assignment to a port of the current architecture,
@@ -110,10 +110,10 @@
                 port (dict-ref (meta/entity-ports (lookup #'ent-name)) #'port-name))
        (unless (eq? mode (meta/port-mode port))
          (raise-syntax-error (syntax->datum #'port-name) "Invalid target for assignment" stx))
-       #`(assign target^ #,(resolve #'expr))]
+       #`(assign target^ #,(check #'expr))]
 
       [:stx/operation
-       #`(op #,@(map resolve (attribute arg)))]
+       #`(op #,@(map check (attribute arg)))]
 
       [(inst-name:id port-name:id)
        ; Check that inst-name refers to an instance.
