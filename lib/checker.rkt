@@ -10,7 +10,7 @@
 (provide begin-tiny-hdl)
 
 (define-syntax (begin-tiny-hdl stx)
-  (resolve (decorate stx)))
+  (check (decorate stx)))
 
 (begin-for-syntax
   (define (decorate stx)
@@ -52,24 +52,24 @@
 
   (define current-entity-name (make-parameter #f))
 
-  (define (resolve stx)
+  (define (check stx)
     (syntax-parse stx
       #:literals [begin-tiny-hdl]
 
       [(begin-tiny-hdl body ...)
        #`(begin
-           #,@(map resolve (attribute body)))]
+           #,@(map check (attribute body)))]
 
       [:stx/architecture
        (parameterize ([current-entity-name #'ent-name])
           #`(architecture name ent-name
-              #,@(map resolve (attribute body))))]
+              #,@(map check (attribute body))))]
 
       [:stx/assignment
-       #`(assign #,(resolve #'target) #,(resolve #'expr))]
+       #`(assign #,(check #'target) #,(check #'expr))]
 
       [:stx/operation
-       #`(op #,@(map resolve (attribute arg)))]
+       #`(op #,@(map check (attribute arg)))]
 
       [(inst-name:id port-name:id)
        (define/syntax-parse inst:stx/instance     (lookup #'inst-name))

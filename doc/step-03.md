@@ -6,7 +6,7 @@ constructs.
 Compared with step 2, the example `full-adder-step-03.rkt` has the following
 noticeable differences:
 
-* The Tiny-HDL source if wrapped in a `begin-tiny-hdl` construct.
+* The Tiny-HDL source is wrapped in a `begin-tiny-hdl` construct.
 * In the assignment statements, references to ports no longer contain the entity name.
 
 You can run the example by typing this command:
@@ -17,7 +17,7 @@ racket examples/full-adder-step-03-test.rkt
 
 ## Syntax classes
 
-In `lib/resolver.rkt`, we define two functions that transform syntax objects.
+In `lib/checker.rkt`, we define two functions that transform syntax objects.
 These functions rely on pattern matching to parse Tiny-HDL constructs.
 Since we use the same syntax patterns several times, we have decided to
 abstract them as syntax classes defined in a separate file: `lib/syntax.rkt`.
@@ -39,7 +39,7 @@ Difficulties arise when we want to transform the expression `(h1 a)` into `(port
 as the name `half-adder` is not directly related to any element in the current context.
 This is a situation where an explicit scoping system needs to be introduced.
 
-In `lib/resolver.rkt`, the `decorate` function performs the following operations:
+In `lib/checker.rkt`, the `decorate` function performs the following operations:
 
 * Create a hierarchy of nested scopes.
 * In each scope, register the association between a name and the corresponding syntax object.
@@ -91,7 +91,7 @@ assignment targets or expressions are decorated with the current scope
 
 ### Name resolution
 
-In function `resolve`, we use the `lookup` function to get the syntax object
+In function `check`, we use the `lookup` function to get the syntax object
 that is associated to a given name in the current scope or one of its parents.
 It will allow us to retrieve the name of the entity that corresponds to a given instance name.
 
