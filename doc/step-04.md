@@ -65,9 +65,9 @@ In `lib/scope.rkt`:
 File `lib/meta.rkt` defines `struct` types for all the named element types
 in a Tiny-HDL source.
 
-In `lib/resolver.rkt`:
+In `lib/checker.rkt`:
 * Function `decorate` has been changed to create and bind `struct` instances instead of binding syntax objects.
-* Function `resolve` uses predicates when calling `lookup`.
+* Function `check` uses predicates when calling `lookup`.
 
 Some checks may seem redundant, but they prove useful when an instance or
 assignment appears before the elements that it references
@@ -75,6 +75,6 @@ assignment appears before the elements that it references
 Redundant lookup operations have a low impact on performance thanks to the
 use of a lookup cache in macro `begin-tiny-hdl`.
 
-All semantic rule checks have been inserted in the `resolve` function.
-As a consequence, the result of `resolve` is a semantically correct syntax
+All semantic rule checks have been inserted in the `check` function.
+As a consequence, the result of `check` is a semantically correct syntax
 object where names have been fully resolved.
