@@ -23,21 +23,23 @@
              #,@(map decorate (attribute body))))]
 
       [:stx/entity
+       #:with port^ (with-scope (map decorate (attribute port)))
        (bind! #'name
-         (with-scope
-           #`(entity name #,(map decorate (attribute port)))))]
+         #'(entity name port^))]
 
       [:stx/port
        (bind! #'name stx)]
 
       [:stx/architecture
+       #:with ent-name^   (add-scope #'ent-name)
+       #:with (body^ ...) (with-scope (map decorate (attribute body)))
        (bind! #'name
-         (with-scope
-           #`(architecture name #,(add-scope #'ent-name)
-               #,@(map decorate (attribute body)))))]
+         #`(architecture name ent-name^ body^ ...))]
 
       [:stx/instance
-       (bind! #'name #`(instance name #,(add-scope #'arch-name)))]
+       #:with arch-name^ (add-scope #'arch-name)
+       (bind! #'name
+         #'(instance name arch-name^))]
 
       [:stx/assignment
        #`(assign #,(decorate #'target) #,(decorate #'expr))]
@@ -46,7 +48,8 @@
        #`(op #,@(map decorate (attribute arg)))]
 
       [(inst-name:id port-name:id)
-       #`(#,(add-scope #'inst-name) port-name)]
+       #:with inst-name^ (add-scope #'inst-name)
+       #'(inst-name^ port-name)]
 
       [_ stx]))
 
