@@ -15,7 +15,14 @@
 (provide begin-tiny-hdl)
 
 (define-syntax (begin-tiny-hdl stx)
-  (replace-context stx ((checker stx))))
+  #`(begin
+      #,(replace-context stx ((checker stx)))
+      (require
+        tiny-hdl/lib/scope
+        (prefix-in meta/ tiny-hdl/lib/meta))
+      (provide #%tiny-hdl-export)
+      (define (#%tiny-hdl-export)
+        #,@(make-export-body))))
 
 (begin-for-syntax
   (define (check-all lst)
@@ -37,17 +44,23 @@
          #`(begin
              #,@(check-all body^)))]
 
+      [:stx/use
+       (define path-str (syntax->datum #'path))
+       (define import   (dynamic-require path-str '#%tiny-hdl-export))
+       (import)
+       (thunk stx)]
+
       [:stx/entity
        ; An entity does not introduce a new scope.
        ; Its ports are collected into a dictionary for later use.
-       (bind! #'name (meta/make-entity
-                       (for/hash ([p (in-list (attribute port))])
-                         (define/syntax-parse q:stx/port p)
-                         (values #'q.name (meta/port (syntax->datum #'q.mode))))))
+       (bind/export! #'name (meta/make-entity
+                              (for/hash ([p (in-list (attribute port))])
+                                (define/syntax-parse q:stx/port p)
+                                (values #'q.name (meta/port (syntax->datum #'q.mode))))))
        (thunk stx)]
 
       [:stx/architecture
-       (bind! #'name (meta/architecture #'ent-name))
+       (bind/export! #'name (meta/architecture #'ent-name))
        (define body^ (with-scope
                        (~>> (attribute body)
                             (map add-scope)
@@ -157,4 +170,14 @@
                         (list (syntax->datum inst-name) port-name^)
                         port-name^))
       (unless (set-member? (assignment-targets) port-id)
-        (raise-syntax-error port-name^ "Port is never assigned" ctx)))))
+        (raise-syntax-error port-name^ "Port is never assigned" ctx))))
+
+  (define (make-export-body)
+    (for/list ([(name obj) (in-dict exports-table)])
+      #`(bind/import! #'#,name
+          #,(match obj
+              [(meta/entity ports)
+               #`(meta/make-entity (list #,@(for/list ([(n p) (in-dict ports)])
+                                              #`(cons #'#,n (meta/port '#,(meta/port-mode p))))))]
+              [(meta/architecture ent-name)
+               #`(meta/architecture #'#,ent-name)])))))
