@@ -1,67 +1,53 @@
 #lang racket
 
-(require syntax/id-table)
+(require
+  syntax/id-table
+  racket/function)
 
 (provide
-  (struct-out scope)
+  exports-table
   with-scope
-  with-scope*
-  bind!
+  thunk/in-scope
   add-scope
-  with-lookup-cache
+  bind!
+  bind/export!
+  bind/import!
   lookup)
 
-; A scope has an optional parent scope
-; and a table that maps ids to custom data.
-(struct scope (parent table))
-
 (define current-scope (make-parameter #f))
+(define exports-table (make-free-id-table))
+(define imports-table (make-free-id-table))
 
-; Create a new scope with the given parent and an empty table.
-(define (make-scope [parent (current-scope)])
-  (scope parent (make-free-id-table)))
+(define-syntax-rule (with-scope* sc body ...)
+  (parameterize ([current-scope sc])
+    body ...))
 
-; Introduce a new scope for the given body.
 (define-syntax-rule (with-scope body ...)
-  (parameterize ([current-scope (make-scope)])
+  (with-scope* (syntax-local-make-definition-context (current-scope))
     body ...))
 
-(define-syntax-rule (with-scope* body ...)
-  (let ([sc (make-scope)])
-    (values (parameterize ([current-scope sc])
-              body ...)
-            sc)))
+(define-syntax-rule (thunk/in-scope body ...)
+  (let ([sc (current-scope)])
+    (thunk (with-scope* sc body ...))))
 
-; Associate the given data to the given name in a scope.
-; Return the data unchanged.
-(define (bind! name data [sc (current-scope)])
-  (define table (scope-table sc))
-  (when (dict-has-key? table name)
-    (raise-syntax-error #f "Multiple bindings for identifier" name))
-  (dict-set! table name data)
-  data)
+(define (add-scope stx)
+  (internal-definition-context-introduce (current-scope) stx 'add))
 
-; Add scope information to a syntax object.
-(define (add-scope stx [sc (current-scope)])
-  (syntax-property stx 'scope sc))
+(define (bind! name data)
+  (syntax-local-bind-syntaxes (list name) #`'#,data (current-scope)))
 
-(define lookup-cache (make-parameter (make-hasheq)))
+(define (bind/export! name data)
+  (bind! name data)
+  (dict-set! exports-table name data))
 
-(define-syntax-rule (with-lookup-cache body ...)
-  (parameterize ([lookup-cache (make-hasheq)])
-    body ...))
+(define (bind/import! name data)
+  (dict-set! imports-table name data))
 
-; Lookup a name in a scope chain. If no scope is specified,
-; start at the scope attached to the name.
-; Returns the corresponding data, or raise an error if not found.
-(define (lookup name [pred (λ (x) #t)] [sc (syntax-property name 'scope)])
-  (dict-ref (lookup-cache) name
-      (λ ()
-        (unless sc
-          (raise-syntax-error #f "No declaration found for identifier" name))
-        (define res (dict-ref (scope-table sc) name
-                      (λ () (lookup name pred (scope-parent sc)))))
-        (unless (pred res)
-          (raise-syntax-error #f "Cannot be used in this context" name))
-        (dict-set! (lookup-cache) name res)
-        res)))
+(define (lookup name [pred (λ (x) #t)])
+  (define res (syntax-local-value name
+                (thunk (dict-ref imports-table name
+                         (thunk (raise-syntax-error #f "No declaration found for this identifier" name))))
+                (current-scope)))
+  (unless (pred res)
+    (raise-syntax-error #f "Cannot be used in this context" name))
+  res)
