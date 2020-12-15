@@ -3,7 +3,6 @@
 (require racket/function)
 
 (provide
-  (struct-out scope)
   with-scope
   thunk/in-scope
   add-scope
