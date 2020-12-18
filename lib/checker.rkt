@@ -140,11 +140,11 @@
     (for/fold ([acc  (set)])
               ([stmt (in-list stmt-lst)])
       (syntax-parse stmt
-        [:stx/assignment
-         (define port-id (syntax->datum #'target))
+        [a:stx/assignment
+         (define port-id (syntax->datum #'a.target))
          (when (set-member? acc port-id)
            (define port-name (if (list? port-id) (second port-id) port-id))
-           (raise-syntax-error port-name "Port is assigned more than one time" #'target))
+           (raise-syntax-error port-name "Port is assigned more than one time" #'a.target))
          (set-add acc port-id)]
 
         [_ acc])))
