@@ -21,8 +21,8 @@
   (define (check-all lst)
     (map (λ (f) (f)) lst))
 
-  (define current-entity-name (make-parameter #f))
-  (define assignment-targets  (make-parameter #f))
+  (define current-entity-name        (make-parameter #f))
+  (define current-assignment-targets (make-parameter #f))
 
   (define (checker stx)
     (syntax-parse stx
@@ -58,7 +58,7 @@
          ; Check the architecture body, providing the current entity name
          ; as a parameter, for name resolution in port references.
          (parameterize ([current-entity-name #'a.ent-name]
-                        [assignment-targets (collect-assignment-targets (attribute a.body))])
+                        [current-assignment-targets (collect-assignment-targets (attribute a.body))])
            ; Check that all output ports of the entity are assigned
            ; in the current architecture.
            (check-all-assigned stx)
@@ -141,11 +141,11 @@
               ([stmt (in-list stmt-lst)])
       (syntax-parse stmt
         [a:stx/assignment
-         (define port-id (syntax->datum #'a.target))
-         (when (set-member? acc port-id)
-           (define port-name (if (list? port-id) (second port-id) port-id))
+         (define target-id (syntax->datum #'a.target))
+         (when (set-member? acc target-id)
+           (define port-name (if (list? target-id) (second target-id) target-id))
            (raise-syntax-error port-name "Port is assigned more than one time" #'a.target))
-         (set-add acc port-id)]
+         (set-add acc target-id)]
 
         [_ acc])))
 
@@ -156,8 +156,8 @@
     (for ([(port-name port) (in-dict (meta/entity-ports (lookup ent-name meta/entity?)))]
           #:when (eq? mode (meta/port-mode port)))
       (define port-name^ (syntax->datum port-name))
-      (define port-id (if inst-name
-                        (list (syntax->datum inst-name) port-name^)
-                        port-name^))
-      (unless (set-member? (assignment-targets) port-id)
+      (define target-id (if inst-name
+                          (list (syntax->datum inst-name) port-name^)
+                          port-name^))
+      (unless (set-member? (current-assignment-targets) target-id)
         (raise-syntax-error port-name^ "Port is never assigned" ctx)))))
