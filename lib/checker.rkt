@@ -60,7 +60,7 @@
        (thunk stx)]
 
       [a:stx/architecture
-       (bind! #'a.name (meta/architecture #'a.ent-name))
+       (bind/export! #'a.name (meta/architecture #'a.ent-name))
        (define body^ (with-scope
                        (~>> (attribute a.body)
                             (map add-scope)
