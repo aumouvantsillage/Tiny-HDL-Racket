@@ -35,47 +35,47 @@
          #`(begin
              #,@(check-all body^)))]
 
-      [:stx/entity
+      [e:stx/entity
        ; An entity does not introduce a new scope.
        ; Its ports are collected into a dictionary for later use.
-       (bind! #'name (meta/make-entity
-                       (for/hash ([p (in-list (attribute port))])
-                         (define/syntax-parse q:stx/port p)
-                         (values #'q.name (meta/port (syntax->datum #'q.mode))))))
+       (bind! #'e.name (meta/make-entity
+                         (for/hash ([p (in-list (attribute e.port))])
+                           (define/syntax-parse q:stx/port p)
+                           (values #'q.name (meta/port (syntax->datum #'q.mode))))))
        (thunk stx)]
 
-      [:stx/architecture
-       (bind! #'name (meta/architecture #'ent-name))
+      [a:stx/architecture
+       (bind! #'a.name (meta/architecture #'a.ent-name))
        (define body^ (with-scope
-                       (~>> (attribute body)
+                       (~>> (attribute a.body)
                             (map add-scope)
                             (map checker))))
        (thunk/in-scope
          ; Check that ent-name refers to an entity.
-         (lookup #'ent-name meta/entity?)
+         (lookup #'a.ent-name meta/entity?)
          ; Check the architecture body, providing the current entity name
          ; as a parameter, for name resolution in port references.
-         (parameterize ([current-entity-name #'ent-name])
-           #`(architecture name ent-name
+         (parameterize ([current-entity-name #'a.ent-name])
+           #`(architecture a.name a.ent-name
                #,@(check-all body^))))]
 
-      [:stx/instance
-       (bind! #'name (meta/instance #'arch-name))
+      [i:stx/instance
+       (bind! #'i.name (meta/instance #'i.arch-name))
        (thunk/in-scope
          ; Check that arch-name refers to an architecture.
-         (lookup #'arch-name meta/architecture?)
+         (lookup #'i.arch-name meta/architecture?)
          stx)]
 
-      [:stx/assignment
-       (define target^ (checker #'target))
-       (define expr^   (checker #'expr))
+      [a:stx/assignment
+       (define target^ (checker #'a.target))
+       (define expr^   (checker #'a.expr))
        (thunk
          #`(assign #,(target^) #,(expr^)))]
 
-      [:stx/operation
-       (define arg^ (map checker (attribute arg)))
+      [o:stx/operation
+       (define arg^ (map checker (attribute o.arg)))
        (thunk
-         #`(op #,@(check-all arg^)))]
+         #`(o.op #,@(check-all arg^)))]
 
       [(inst-name:id port-name:id)
        (thunk/in-scope
