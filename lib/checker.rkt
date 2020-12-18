@@ -81,11 +81,14 @@
       [i:stx/instance
        (bind! #'i.name (meta/instance #'i.arch-name))
        (thunk/in-scope
-         ; Check that arch-name refers to an architecture.
-         (define arch (lookup #'i.arch-name meta/architecture?))
-         ; Check that all input ports of the entity for that architecture
-         ; are assigned in the current architecture.
-         (check-all-assigned stx #'i.name (meta/architecture-ent-name arch))
+         (~> #'i.arch-name
+             ; Check that arch-name refers to an architecture.
+             (lookup meta/architecture?)
+             ; Get the entity name for that architecture
+             (meta/architecture-ent-name)
+             ; Check that all input ports of the entity for that architecture
+             ; are assigned in the current architecture.
+             (check-all-assigned stx #'i.name _))
          stx)]
 
       [a:stx/assignment
