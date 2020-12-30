@@ -1,6 +1,7 @@
 #lang racket
 
 (require
+  syntax/parse/define
   "expander.rkt"
   (prefix-in stx/ "syntax.rkt")
   (for-syntax
@@ -14,15 +15,34 @@
 
 (provide begin-tiny-hdl)
 
-(define-syntax (begin-tiny-hdl stx)
-  #`(begin
-      #,(replace-context stx ((checker stx)))
-      (require
-        tiny-hdl/lib/scope
-        (prefix-in meta/ tiny-hdl/lib/meta))
-      (provide #%tiny-hdl-export)
-      (define (#%tiny-hdl-export)
-        #,@(make-export-body))))
+(define-syntax-parser begin-tiny-hdl
+  [(_ body ...)
+   #'(begin
+       (module-level-bindings body) ...
+       (check body ...))])
+
+(define-syntax-parser module-level-bindings
+  [(_ u:stx/use)
+   #'(require u.path)]
+
+  [(_ e:stx/entity)
+   #'(begin
+       (provide e.name)
+       (define-syntax e.name (meta/make-entity
+                               (for/hash ([p (in-list '(e.port ...))])
+                                 (define/syntax-parse q:stx/port p)
+                                 (values #'q.name (meta/port (syntax->datum #'q.mode)))))))]
+
+  [(_ a:stx/architecture)
+   #'(begin
+       (provide a.name)
+       (define-syntax a.name (meta/architecture #'a.ent-name)))]
+
+  [_
+   #'(begin)])
+
+(define-syntax (check stx)
+  ((checker stx)))
 
 (begin-for-syntax
   (define (check-all lst)
@@ -33,9 +53,9 @@
 
   (define (checker stx)
     (syntax-parse stx
-      #:literals [begin-tiny-hdl]
+      #:literals [check]
 
-      [(begin-tiny-hdl body ...)
+      [(check body ...)
        (define body^ (with-scope
                        (~>> (attribute body)
                             (map add-scope)
@@ -45,22 +65,9 @@
              #,@(check-all body^)))]
 
       [:stx/use
-       (define path-str (syntax->datum #'path))
-       (define import   (dynamic-require path-str '#%tiny-hdl-export))
-       (import)
-       (thunk stx)]
-
-      [e:stx/entity
-       ; An entity does not introduce a new scope.
-       ; Its ports are collected into a dictionary for later use.
-       (bind/export! #'e.name (meta/make-entity
-                                (for/hash ([p (in-list (attribute e.port))])
-                                  (define/syntax-parse q:stx/port p)
-                                  (values #'q.name (meta/port (syntax->datum #'q.mode))))))
-       (thunk stx)]
+       (thunk #'(begin))]
 
       [a:stx/architecture
-       (bind/export! #'a.name (meta/architecture #'a.ent-name))
        (define body^ (with-scope
                        (~>> (attribute a.body)
                             (map add-scope)
@@ -173,14 +180,4 @@
                           (list (syntax->datum inst-name) port-name^)
                           port-name^))
       (unless (set-member? (current-assignment-targets) target-id)
-        (raise-syntax-error port-name^ "Port is never assigned" ctx))))
-
-  (define (make-export-body)
-    (for/list ([(name obj) (in-dict exports-table)])
-      #`(bind/import! #'#,name
-          #,(match obj
-              [(meta/entity ports)
-               #`(meta/make-entity (list #,@(for/list ([(n p) (in-dict ports)])
-                                              #`(cons #'#,n (meta/port '#,(meta/port-mode p))))))]
-              [(meta/architecture ent-name)
-               #`(meta/architecture #'#,ent-name)])))))
+        (raise-syntax-error port-name^ "Port is never assigned" ctx)))))

@@ -3,7 +3,7 @@
 ; This file is meant to be included from one of the other test modules.
 
 ; Create an instance of a full adder.
-(define fa (full-adder-arch))
+(define fa (make-full-adder-arch))
 
 ; Print a row of the truth table of the full adder.
 (define-syntax-rule (print-truth-table-row xa xb xci)

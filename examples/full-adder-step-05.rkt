@@ -4,7 +4,7 @@
 
 (begin-tiny-hdl
   (use "half-adder-step-05.rkt")
-  
+
   (entity full-adder ([input a] [input b] [input ci] [output s] [output co]))
 
   (architecture full-adder-arch full-adder
