@@ -1,7 +1,7 @@
 #lang racket
 
 (provide
-  half-adder-arch full-adder-arch
+  make-half-adder-arch make-full-adder-arch
   (struct-out half-adder)
   (struct-out full-adder))
 
@@ -10,7 +10,7 @@
                     [s  #:auto]
                     [co #:auto]) #:mutable)
 
-(define (half-adder-arch)
+(define (make-half-adder-arch)
   (define self (half-adder))
   (set-half-adder-s!  self (λ () (xor ((half-adder-a self)) ((half-adder-b self)))))
   (set-half-adder-co! self (λ () (and ((half-adder-a self)) ((half-adder-b self)))))
@@ -22,10 +22,10 @@
                     [s  #:auto]
                     [co #:auto]) #:mutable)
 
-(define (full-adder-arch)
+(define (make-full-adder-arch)
   (define self (full-adder))
-  (define h1   (half-adder-arch))
-  (define h2   (half-adder-arch))
+  (define h1   (make-half-adder-arch))
+  (define h2   (make-half-adder-arch))
   (set-half-adder-a!  h1   (λ () ((full-adder-a  self))))
   (set-half-adder-b!  h1   (λ () ((full-adder-b  self))))
   (set-half-adder-a!  h2   (λ () ((half-adder-s  h1))))
