@@ -9,7 +9,6 @@
     threading
     racket/function
     syntax/parse
-    syntax/strip-context
     "scope.rkt"
     (prefix-in meta/ "meta.rkt")))
 
@@ -56,10 +55,7 @@
       #:literals [check]
 
       [(check body ...)
-       (define body^ (with-scope
-                       (~>> (attribute body)
-                            (map add-scope)
-                            (map checker))))
+       (define body^ (map checker (attribute body)))
        (thunk
          #`(begin
              #,@(check-all body^)))]
