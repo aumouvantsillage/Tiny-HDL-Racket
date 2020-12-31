@@ -17,10 +17,10 @@
 (define-syntax-parser begin-tiny-hdl
   [(_ body ...)
    #'(begin
-       (module-level-bindings body) ...
+       (module-level-bind body) ...
        (check body ...))])
 
-(define-syntax-parser module-level-bindings
+(define-syntax-parser module-level-bind
   [(_ u:stx/use)
    #'(require u.path)]
 
