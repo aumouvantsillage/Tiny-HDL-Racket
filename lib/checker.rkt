@@ -14,7 +14,7 @@
 (provide begin-tiny-hdl)
 
 (define-syntax (begin-tiny-hdl stx)
-  (replace-context stx ((checker stx))))
+  (replace-context stx ((make-checker stx))))
 
 (begin-for-syntax
   (define (check-all lst)
@@ -22,7 +22,7 @@
 
   (define current-entity-name (make-parameter #f))
 
-  (define (checker stx)
+  (define (make-checker stx)
     (syntax-parse stx
       #:literals [begin-tiny-hdl]
 
@@ -30,7 +30,7 @@
        (define body^ (with-scope
                        (~>> (attribute body)
                             (map add-scope)
-                            (map checker))))
+                            (map make-checker))))
        (thunk
          #`(begin
              #,@(check-all body^)))]
@@ -49,7 +49,7 @@
        (define body^ (with-scope
                        (~>> (attribute a.body)
                             (map add-scope)
-                            (map checker))))
+                            (map make-checker))))
        (thunk/in-scope
          ; Check that ent-name refers to an entity.
          (lookup #'a.ent-name meta/entity?)
@@ -67,13 +67,13 @@
          stx)]
 
       [a:stx/assignment
-       (define target^ (checker #'a.target))
-       (define expr^   (checker #'a.expr))
+       (define target^ (make-checker #'a.target))
+       (define expr^   (make-checker #'a.expr))
        (thunk
          #`(assign #,(target^) #,(expr^)))]
 
       [o:stx/operation
-       (define arg^ (map checker (attribute o.arg)))
+       (define arg^ (map make-checker (attribute o.arg)))
        (thunk
          #`(o.op #,@(check-all arg^)))]
 
