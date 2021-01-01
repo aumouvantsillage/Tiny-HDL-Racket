@@ -17,10 +17,10 @@
 (define-syntax-parser begin-tiny-hdl
   [(_ body ...)
    #'(begin
-       (module-level-bind body) ...
-       (check body ...))])
+       (compile-as-module-level-defs body) ...
+       (compile-tiny-hdl body ...))])
 
-(define-syntax-parser module-level-bind
+(define-syntax-parser compile-as-module-level-defs
   [(_ u:stx/use)
    #'(require u.path)]
 
@@ -40,7 +40,7 @@
   [_
    #'(begin)])
 
-(define-syntax (check stx)
+(define-syntax (compile-tiny-hdl stx)
   ((make-checker stx)))
 
 (begin-for-syntax
@@ -52,9 +52,9 @@
 
   (define (make-checker stx)
     (syntax-parse stx
-      #:literals [check]
+      #:literals [compile-tiny-hdl]
 
-      [(check body ...)
+      [(compile-tiny-hdl body ...)
        (define body^ (map make-checker (attribute body)))
        (thunk
          #`(begin
