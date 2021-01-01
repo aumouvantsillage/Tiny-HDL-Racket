@@ -101,8 +101,8 @@
          ; Check that the target port of an assignment has the appropriate mode:
          ; * output: in an assignment to a port of the current architecture,
          ; * input:  in an assignment to a port of an instance.
-         (define target* (target^))
-         (define/syntax-parse (_ ent-name port-name (~optional inst-name)) target*)
+         (define checked-target (target^))
+         (define/syntax-parse (_ ent-name port-name (~optional inst-name)) checked-target)
          (define expected-mode (if (attribute inst-name) 'input 'output))
          (define actual-mode (~> #'ent-name
                                  (lookup)
@@ -110,7 +110,7 @@
                                  (meta/port-mode)))
          (unless (eq? expected-mode actual-mode)
            (raise-syntax-error (syntax->datum #'port-name) "Invalid target for assignment" stx))
-         #`(assign #,target* #,(expr^)))]
+         #`(assign #,checked-target #,(expr^)))]
 
       [o:stx/operation
        (define arg^ (map make-checker (attribute o.arg)))
