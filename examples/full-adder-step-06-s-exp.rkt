@@ -1,6 +1,6 @@
-#lang tiny-hdl
+#lang tiny-hdl/s-exp
 
-(use "half-adder-step-05.rkt")
+(use "half-adder-step-06-s-exp.rkt")
 
 (entity full-adder ([input a] [input b] [input ci] [output s] [output co]))
 

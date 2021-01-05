@@ -1,2 +1,2 @@
 #lang s-exp syntax/module-reader
-tiny-hdl/lang/expander
+tiny-hdl/lib/lang

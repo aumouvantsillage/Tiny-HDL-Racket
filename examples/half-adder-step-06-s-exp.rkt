@@ -1,4 +1,4 @@
-#lang tiny-hdl
+#lang tiny-hdl/s-exp
 
 (entity half-adder ([input a] [input b] [output s] [output co]))
 
