@@ -23,5 +23,4 @@
        (token 'WHITESPACE lexeme #:skip? #t)]
       [(eof)
        (void)]))
-  (define (next-token) (tiny-hdl-lexer ip))
-  next-token)
+  (λ () (tiny-hdl-lexer ip)))
