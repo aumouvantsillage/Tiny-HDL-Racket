@@ -1,7 +1,5 @@
 #lang racket
 
-(require racket/function)
-
 (provide
   with-scope
   thunk/in-scope
